@@ -1,0 +1,24 @@
+import {useEffect,useState} from 'react';
+import {Download,Save,LockKeyhole,RotateCcw} from 'lucide-react';
+import {api} from '../api';import type {Incident,Doc} from '../types';
+import {Badge,Button,Card,CardContent,CardHeader,Textarea} from './ui';
+export function DocumentsPanel({item,notify,onEditDecision}:{item:Incident;notify:(s:string)=>void;onEditDecision:()=>void}){
+ const [docs,setDocs]=useState<Doc[]>([]);const [active,setActive]=useState('operator');const [busy,setBusy]=useState(false);
+ useEffect(()=>{api.docs(item.id).then(setDocs).catch(e=>notify(e.message))},[item.id,item.updated_at]);
+ const doc=docs.find(x=>x.kind===active);
+ const placeholders=doc?.body?.match(/\[[^\]]+\]/g)||[];
+ const setBody=(v:string)=>setDocs(prev=>prev.map(x=>x.kind===active?{...x,body:v}:x));
+ async function save(){if(!doc?.body)throw new Error('Текст документа пуст');await api.saveDoc(item.id,active,doc.body)}
+ async function doSave(){setBusy(true);try{await save();notify('Редакция сохранена')}catch(e){notify((e as Error).message)}finally{setBusy(false)}}
+ async function download(){if(!doc?.available)return;setBusy(true);try{await save();const r=await fetch(`/api/incidents/${item.id}/documents/${active}/download`);if(!r.ok){const error=await r.json();throw new Error(error.detail||'Ошибка загрузки')}const url=URL.createObjectURL(await r.blob());const link=document.createElement('a');link.href=url;link.download=`marshrut-doc-${item.id}-${active}.docx`;link.click();setTimeout(()=>URL.revokeObjectURL(url),30000)}catch(e){notify((e as Error).message)}finally{setBusy(false)}}
+ async function reset(){setBusy(true);try{await api.resetDoc(item.id,active);setDocs(await api.docs(item.id));notify('Шаблон обновлён из сведений о происшествии')}catch(e){notify((e as Error).message)}finally{setBusy(false)}}
+ return <div className="space-y-4"><div className="notice"><b>Четыре проекта документов.</b> Тексты формируются без LLM. Шаблоны и поля DOCX подготовлены с учётом ГОСТ Р 7.0.97-2025; окончательные бланк, реквизиты и подписи проверяет организация.</div>
+  <Card><CardHeader><h2 className="section-title">Выберите адресата</h2><p className="text-sm text-muted">Каждый документ содержит только сведения, нужные его получателю.</p></CardHeader><CardContent><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{docs.map((x,i)=><button key={x.kind} onClick={()=>setActive(x.kind)} className={`text-left rounded-sm border p-3 text-sm min-h-[70px] ${active===x.kind?'border-accent bg-pale':'border-line hover:bg-slate-50'}`}><span className="font-mono text-[10px] text-muted">{i+1} / 4</span><span className="font-semibold block mt-1">{x.title}</span><span className="text-xs text-muted">{x.available?'Редактировать и скачать':'Требуются подтверждения'}</span></button>)}</div></CardContent></Card>
+  {doc&&!doc.available?<div className="rounded border border-amber-300 bg-amber-50 p-4 flex items-start gap-3"><LockKeyhole size={20}/><div><b>Инструкция водителю пока недоступна</b><p className="text-sm mt-1 mb-3">При изменении движения специалист должен подтвердить схему, трассу и остановки.</p><Button variant="outline" size="sm" onClick={onEditDecision}>Уточнить решение</Button></div></div>:doc?<Card><CardHeader><div className="flex items-center justify-between gap-3"><h2 className="section-title">{doc.title}</h2><Badge tone="amber">Проект до подписания</Badge></div><p className="text-sm text-muted">Текст можно править здесь или после скачивания в редакторе DOCX.</p></CardHeader><CardContent>
+   {placeholders.length>0&&<div className="rounded border border-amber-300 bg-amber-50 p-3 text-sm mb-4"><b>Есть незаполненные реквизиты (<span className="font-mono">{placeholders.length}</span>).</b> {Array.from(new Set(placeholders)).slice(0,4).join(', ')}{placeholders.length>4?'…':''}. {item.status==='Черновик'||item.status==='На проверке'?<button className="text-accent underline" onClick={onEditDecision}>Заполнить в решении</button>:<span>Впишите их в текст документа перед скачиванием.</span>}</div>}
+   <Textarea rows={18} aria-label="Редактируемый текст документа" value={doc.body||''} onChange={e=>setBody(e.target.value)} className="font-mono leading-relaxed"/>
+   <div className="flex flex-wrap gap-2 mt-4"><Button variant="outline" disabled={busy} onClick={doSave}><Save size={16}/>Сохранить текст</Button><Button disabled={busy} onClick={download}><Download size={16}/>Скачать DOCX</Button><Button variant="ghost" disabled={busy} onClick={reset}><RotateCcw size={16}/>Обновить шаблон</Button></div>
+   <p className="text-xs text-muted mt-4 mb-0">При обновлении шаблона ваша ручная редакция этого документа будет заменена. Скачивание не означает подписания или отправки.</p>
+  </CardContent></Card>:<p className="text-sm text-muted">Загрузка документов…</p>}
+ </div>
+}

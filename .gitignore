@@ -1,0 +1,11 @@
+frontend/node_modules/
+backend/.venv/
+.venv-compat/
+backend/.venv-win/
+backend/.venv-unix/
+backend/app/__pycache__/
+backend/tests/__pycache__/
+backend/data/*.joblib
+backend/data/*.sqlite3
+backend/data/model_meta.json
+*.pyc

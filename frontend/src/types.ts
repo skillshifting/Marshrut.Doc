@@ -1,0 +1,10 @@
+export type Payload={description:string;place:string;time:string;routes:string;duration_minutes:number|null;details:string;safety_confirmed:boolean;detour_confirmed:boolean;stops_known:boolean;turnaround_confirmed:boolean;reserve_available:boolean;release_adjustment_confirmed:boolean};
+export type Action={action:string;score:number;supporting_cases:number;eligible:boolean;blockers:string[];evidence_weight:number;reason:string;effectiveness_unproven:boolean};
+export type Analog={id:number;description:string;type:string;place:string;routes:string;duration:number;measure:string;outcome:string|null;source:string;similarity:number};
+export type Analysis={classification:{label:string;scores:Record<string,number>;low_confidence:boolean;closest_training_similarity:number;confidence_note:string};analogs:Analog[];actions:Action[];missing_data:string[];specialist_required:boolean;note:string;synthetic_warning:string};
+export type Decision={action:string;route:string;stops:string;period:string;responsible:string;notes:string;organization?:string;organization_details?:string;carrier?:string;signer_title?:string;signer_name?:string;document_date?:string;document_number?:string};
+export type Incident={id:number;payload:Payload;analysis:Analysis;decision:Decision;status:string;updated_at:string;events:{at:string;action:string;details:string}[]};
+export type Doc={kind:string;title:string;available:boolean;body:string|null};
+export type ModelInfo={version:string;count:number;train_count:number;test_count:number;groups:number;test_groups:number;accuracy:number;macro_f1:number;matrix:number[][];labels:string[];caution:string};
+export const emptyPayload:Payload={description:'',place:'',time:'',routes:'',duration_minutes:null,details:'',safety_confirmed:false,detour_confirmed:false,stops_known:false,turnaround_confirmed:false,reserve_available:false,release_adjustment_confirmed:false};
+export const emptyDecision:Decision={action:'',route:'',stops:'',period:'',responsible:'',notes:''};

@@ -1,0 +1,40 @@
+import {useEffect,useState} from 'react';
+import {Activity,ClipboardList,FileText,GitBranch,Database,Plus,BusFront,Menu,X} from 'lucide-react';
+import {api} from './api';import type {Incident,Payload,ModelInfo} from './types';import {emptyPayload} from './types';
+import {Button,Card,CardContent,CardHeader,Badge} from './components/ui';
+import {IncidentFields} from './components/IncidentFields';import {Results} from './components/Results';
+import {DecisionPanel} from './components/DecisionPanel';import {DocumentsPanel} from './components/DocumentsPanel';import {ModelPanel} from './components/ModelPanel';
+type View='new'|'results'|'decision'|'documents'|'model';
+const navigation:[View,string,typeof Plus][]=[['new','Сообщение',Plus],['results','Варианты',Activity],['decision','Решение',GitBranch],['documents','Документы',FileText]];
+const demos:{title:string;payload:Payload}[]=[
+ {title:'ДТП у остановки',payload:{...emptyPayload,description:'На проспекте у остановки произошло столкновение двух машин. Автобусы идут по одной полосе, образовался затор.',place:'Проспект Северный, 12',routes:'12, 18',time:new Date().toISOString().slice(0,16),duration_minutes:90}},
+ {title:'Перекрытие улицы',payload:{...emptyPayload,description:'Экстренные службы полностью перекрыли улицу после разлива топлива. Проезд всех автобусов закрыт.',place:'Улица Лесная',routes:'12, 18',time:new Date().toISOString().slice(0,16),duration_minutes:180}},
+ {title:'Поломка автобуса',payload:{...emptyPayload,description:'Во время рейса у автобуса вышел из строя двигатель, машина остановилась у конечной.',place:'Конечная Северная',routes:'3',time:new Date().toISOString().slice(0,16),duration_minutes:60}}
+];
+export default function App(){
+ const [view,setView]=useState<View>('new');const [payload,setPayload]=useState<Payload>(emptyPayload);
+ const [item,setItem]=useState<Incident|null>(null);const [cases,setCases]=useState<Incident[]>([]);
+ const [model,setModel]=useState<ModelInfo|null>(null);const [toast,setToast]=useState('');
+ const [busy,setBusy]=useState(false);const [menu,setMenu]=useState(false);
+ const notify=(message:string)=>{setToast(message);setTimeout(()=>setToast(''),6000)};
+ useEffect(()=>{api.list().then(setCases).catch(e=>notify(e.message));api.model().then(setModel).catch(e=>notify(e.message))},[]);
+ const update=(x:Incident)=>{setItem(x);setCases(prev=>[x,...prev.filter(y=>y.id!==x.id)])};
+ const navigate=(v:View)=>{setView(v);setMenu(false)};
+ async function analyze(){setBusy(true);try{const x=await api.analyze(payload);update(x);navigate('results');notify('Сообщение проанализировано. Проверьте варианты.')}catch(e){notify((e as Error).message)}finally{setBusy(false)}}
+ async function choose(action:string){if(!item)return;setBusy(true);try{update(await api.decision(item.id,{...item.decision,action}));navigate('decision')}catch(e){notify((e as Error).message)}finally{setBusy(false)}}
+ const title=view==='new'?'Что случилось?':view==='results'?'Какие есть варианты?':view==='decision'?'Проверьте и подтвердите решение':view==='documents'?'Подготовьте документы':'Модель и данные';
+ return <div className="min-h-screen lg:flex"><aside className={`sidebar ${menu?'mobile-open':''}`}><div className="brand"><div className="brand-mark"><BusFront size={23}/></div><div><div className="font-bold tracking-tight text-lg">Маршрут.Док</div><div className="text-xs text-slate-400">ОПЕРАТИВНЫЕ РЕШЕНИЯ</div></div><button className="ml-auto lg:hidden" onClick={()=>setMenu(false)} aria-label="Закрыть меню"><X size={20}/></button></div>
+ <div className="sidebar-label">ПОРЯДОК РАБОТЫ</div><nav aria-label="Основная навигация" className="space-y-1">{navigation.map(([id,label,Icon],i)=><button key={id} onClick={()=>navigate(id)} className={`nav-item ${view===id?'nav-active':''}`}><span className="step-number">{i+1}</span><Icon size={17}/>{label}</button>)}</nav>
+ <div className="sidebar-label mt-9">ПОСЛЕДНИЕ СЛУЧАИ</div><div className="space-y-1 max-h-[30vh] overflow-auto">{cases.length===0&&<p className="text-xs text-slate-400 px-3">Пока нет происшествий</p>}{cases.slice(0,8).map(x=><button key={x.id} className="case-item" onClick={()=>{setItem(x);navigate('results')}}><span className="font-mono font-semibold text-[11px]">№ {x.id}</span><span className="truncate block text-slate-300">{x.payload.place||x.payload.description}</span><span className="font-mono text-[10px] text-slate-400">{x.status}</span></button>)}</div>
+ <div className="sidebar-bottom"><button className="text-xs text-slate-300 hover:text-white flex items-center gap-2 mb-4" onClick={()=>navigate('model')}><Database size={14}/>Модель и учебные данные</button><div className="text-xs text-slate-400">Все решения проверяет специалист</div></div></aside>
+ <div className="flex-1 min-w-0"><header className="topbar"><button className="lg:hidden mr-3" onClick={()=>setMenu(true)} aria-label="Открыть меню"><Menu size={20}/></button><div className="topbar-path"><span className="topbar-prefix">МД / ОПЕРАТОР</span><span className="topbar-separator">/</span><span className="topbar-title">{title}</span></div><div className="topbar-state"><span className="status-square"/>ЛОКАЛЬНЫЙ РЕЖИМ</div></header>
+ <main className="page"><div className="page-heading"><div><div className="eyebrow">{view==='model'?'УЧЕБНАЯ МОДЕЛЬ':`ШАГ ${navigation.findIndex(x=>x[0]===view)+1} ИЗ 4`}</div><h1>{title}</h1><p>{view==='new'?'Опишите ситуацию. Остальное можно уточнить позже.':view==='results'?'Система показывает варианты, а вы выбираете меру.':view==='decision'?'Уточните условия и согласуйте действия.':view==='documents'?'Отредактируйте и скачайте проекты документов.':'Переобучение и проверка модели на учебных данных.'}</p></div>{item&&view!=='new'&&view!=='model'&&<div className="flex items-center gap-2"><Badge tone="amber">№ {item.id}</Badge><Badge>{item.status}</Badge></div>}</div>
+ {view!=='model'&&<div className="progress-steps" aria-label="Этапы работы">{navigation.map(([id,label],i)=><button key={id} className={`progress-step ${view===id?'current':''}`} onClick={()=>navigate(id)}><span>{i+1}</span>{label}</button>)}</div>}
+ {view==='new'&&<div className="grid lg:grid-cols-[minmax(0,1fr)_260px] gap-4"><Card><CardHeader><h2 className="section-title">Сообщение о происшествии</h2></CardHeader><CardContent><IncidentFields value={payload} onChange={setPayload}/><div className="flex flex-wrap gap-3 items-center mt-6"><Button disabled={busy||payload.description.trim().length<8} onClick={analyze}>{busy?'Анализ…':'Посмотреть варианты'}</Button><span className="text-xs text-muted">Это создаст черновик, без изменения движения</span></div></CardContent></Card><Card><CardHeader><h2 className="section-title">Попробовать пример</h2></CardHeader><CardContent><p className="text-sm text-muted mb-4">Примеры только заполняют поля. Анализ выполняется моделью при нажатии кнопки.</p><div className="space-y-2">{demos.map(x=><Button key={x.title} className="w-full justify-start" variant="outline" onClick={()=>setPayload(x.payload)}>{x.title}</Button>)}</div></CardContent></Card></div>}
+ {view==='results'&&(item?<Results item={item} model={model} onSelect={choose}/>:<Empty onNew={()=>navigate('new')}/>)}
+ {view==='decision'&&(item?<DecisionPanel item={item} onUpdate={update} notify={notify} onDocuments={()=>navigate('documents')}/>:<Empty onNew={()=>navigate('new')}/>)}
+ {view==='documents'&&(item?<DocumentsPanel item={item} notify={notify} onEditDecision={()=>navigate('decision')}/>:<Empty onNew={()=>navigate('new')}/>)}
+ {view==='model'&&<ModelPanel info={model} onUpdate={setModel} notify={notify}/>}
+ </main></div>{toast&&<div role="status" className="toast"><ClipboardList size={18}/>{toast}<button onClick={()=>setToast('')} aria-label="Закрыть">×</button></div>}</div>
+}
+function Empty({onNew}:{onNew:()=>void}){return <Card><CardContent className="py-9 text-center"><h2 className="section-title mb-2">Сначала добавьте происшествие</h2><p className="text-muted mb-4">Заполните сообщение или откройте случай в списке слева.</p><Button onClick={onNew}>Создать сообщение</Button></CardContent></Card>}
