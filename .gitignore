@@ -1,4 +1,8 @@
 frontend/node_modules/
+frontend/tsconfig.tsbuildinfo
+# Local browser API key; the checked-in template contains no key.
+frontend/public/map-config.js
+frontend/dist/map-config.js
 backend/.venv/
 .venv-compat/
 backend/.venv-win/

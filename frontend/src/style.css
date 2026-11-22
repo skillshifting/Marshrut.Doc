@@ -68,6 +68,32 @@ h1,h2,h3,p { margin-top: 0; }
 .field { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 650; }
 .field-label { font-size: 13px; font-weight: 700; }
 .field textarea,.field input { font-weight: 400; }
+.location-input-row { display: flex; gap: 7px; min-width: 0; }
+.location-input-row input { min-width: 0; }
+.location-input-row button { flex: none; white-space: nowrap; }
+.location-hint { color: #607780; font-size: 11px; font-weight: 500; }
+.location-hint button { margin-left: 4px; color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.location-overlay { position: fixed; inset: 0; z-index: 40; background: rgba(17,35,44,.66); animation: location-fade .16s ease-out; }
+.location-dialog { position: fixed; z-index: 41; top: 50%; left: 50%; display: flex; flex-direction: column; overflow-y: auto; width: min(880px,calc(100vw - 28px)); max-height: min(780px,calc(100dvh - 28px)); transform: translate(-50%,-50%); border: 1px solid #a9b9c0; background: #fff; box-shadow: 0 24px 72px rgba(17,35,44,.28); animation: location-in .18s ease-out; }
+.location-dialog-heading { display: flex; justify-content: space-between; gap: 20px; padding: 18px 20px 13px; border-bottom: 1px solid var(--line); }
+.location-dialog-heading .eyebrow { display: block; margin-bottom: 5px; }
+.location-dialog-heading h2 { margin: 0 0 4px; font-size: 21px; letter-spacing: -.03em; }
+.location-dialog-heading p { margin: 0; color: var(--muted); font-size: 12px; font-weight: 400; line-height: 1.5; }
+.location-close { display: grid; place-items: center; flex: none; width: 32px; height: 32px; color: #506571; border: 1px solid var(--line); }
+.location-close:hover { background: var(--pale); }
+.location-search { display: flex; gap: 8px; padding: 12px 20px; border-bottom: 1px solid var(--line); }
+.location-search button { flex: none; }
+.location-map-wrap { position: relative; flex: none; }
+.location-map { min-height: 230px; height: min(43vh,390px); background: #e5eced; }
+.location-map-status { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; padding: 24px; background: #edf2f3; color: var(--accent); text-align: center; font-size: 13px; font-weight: 650; }
+.location-map-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 220px; background: #edf2f3; color: #56717e; text-align: center; font-size: 12px; }
+.location-map-empty strong { color: var(--ink); font-size: 15px; }
+.location-dialog-bottom { padding: 14px 20px 18px; border-top: 1px solid var(--line); }
+.location-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; }
+.location-meta { color: var(--muted); font-size: 11px; font-weight: 500; line-height: 1.4; }
+.location-footer button { flex: none; }
+@keyframes location-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes location-in { from { opacity: 0; transform: translate(-50%,-49%); } to { opacity: 1; transform: translate(-50%,-50%); } }
 .notice { border: 1px solid #cad8dc; border-left: 2px solid var(--accent); border-radius: 2px; background: #f6f9f9; padding: 10px 13px; color: #344f5d; font-size: 12px; line-height: 1.55; }
 .select { width: 100%; height: 36px; padding: 0 32px 0 10px; border: 1px solid var(--line); border-radius: 2px; background-color: #fff; color: var(--ink); font-size: 13px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23556677' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; }
 .disclosure { padding: 0 13px; border: 1px solid var(--line); border-radius: 2px; }
@@ -96,6 +122,14 @@ h1,h2,h3,p { margin-top: 0; }
   .page { padding: 22px 20px 55px; }
 }
 @media(max-width:680px) {
+  .location-dialog-heading { padding: 13px 14px 11px; }
+  .location-dialog-heading h2 { font-size: 18px; }
+  .location-dialog-heading p { font-size: 11px; }
+  .location-search { padding: 10px 14px; }
+  .location-map { height: 38vh; }
+  .location-dialog-bottom { padding: 12px 14px 14px; }
+  .location-footer { align-items: stretch; flex-direction: column; gap: 9px; }
+  .location-footer button { width: 100%; }
   .progress-steps { grid-template-columns: repeat(2,1fr); }
   .page-heading { display: block; }
   .page-heading>div:last-child { margin-top: 9px; }

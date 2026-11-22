@@ -29,6 +29,8 @@ app.add_middleware(CORSMiddleware,allow_origins=['http://localhost:5173','http:/
 class IncidentIn(BaseModel):
     description: str = Field(min_length=8, max_length=5000)
     place: str = ''
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
     time: str = ''
     routes: str = ''
     duration_minutes: int | None = Field(default=None,ge=1,le=10080)

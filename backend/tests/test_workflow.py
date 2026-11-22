@@ -54,8 +54,17 @@ class WorkflowTests(unittest.TestCase):
         asset=re.search(r'src="([^"]+\.js)"',response.text)
         self.assertIsNotNone(asset)
         self.assertEqual(self.client.get(asset.group(1)).status_code,200)
+        self.assertIn('/map-config.js',response.text)
+        self.assertEqual(self.client.get('/map-config.js').status_code,200)
         self.assertEqual(self.client.get('/api/health').status_code,200)
         self.assertEqual(self.client.get('/training-example.csv').status_code,200)
+
+    def test_map_address_and_point_survive_save_and_manual_correction(self):
+        created=self.client.post('/api/analyze',json=self.payload(place='Невский проспект 12, Санкт-Петербург',latitude=59.93,longitude=30.34)).json()
+        self.assertEqual(created['payload']['latitude'],59.93)
+        corrected=self.client.put(f'/api/incidents/{created["id"]}/payload',json=self.payload(place='Невский проспект, у остановки',latitude=59.93,longitude=30.34)).json()
+        self.assertEqual(corrected['payload']['place'],'Невский проспект, у остановки')
+        self.assertEqual(corrected['payload']['longitude'],30.34)
 
     def test_manual_approval_and_real_docx(self):
         created=self.client.post('/api/analyze',json=self.payload()).json(); ident=created['id']
